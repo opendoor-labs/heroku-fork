@@ -90,7 +90,7 @@ function* fork (context, heroku) {
   yield addons.copyConfigVars(oldApp, newApp, context.flags['skip-pg'], context.flags['exclude-configs']);
 
   if (stopping) { return; }
-  if (!context.flags['sync-only']) {
+  if (!context.flags['sync-only'] || context.flags['copy-slug']) {
     yield apps.copySlug(oldApp, newApp, slug);
   }
 
@@ -136,6 +136,7 @@ Example:
     {name: 'exclude-configs', description: 'CSV of configs to skip', hasValue: true},
     {name: 'sync-only', description: 'sync data to existing new app', hasValue: false},
     {name: 'from', description: 'app to fork from', hasValue: true},
+    {name: 'copy-slug', description: 'Copy the slug', hasValue: false},
     {name: 'to', description: 'app to create', hasValue: true},
     {name: 'app', char: 'a', hasValue: true, hidden: true}
   ],
