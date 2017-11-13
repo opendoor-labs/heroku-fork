@@ -69,8 +69,14 @@ function* fork (context, heroku) {
   let slug   = yield apps.getLastSlug(oldApp);
 
   if (stopping) { return; }
-  let newApp = yield apps.createNewApp(oldApp, toAppName, context.flags.region);
-  deleteAppOnFailure = newApp.name;
+  let newApp;
+  if (context.flags['sync-only']) {
+    newApp = yield apps.getApp(toAppName);
+  }
+  else {
+    newApp = yield apps.createNewApp(oldApp, toAppName, context.flags.region);
+    deleteAppOnFailure = newApp.name;
+  }
 
   if (stopping) { return; }
   yield cli.action('Setting buildpacks', apps.setBuildpacks(oldApp, newApp));
@@ -84,7 +90,9 @@ function* fork (context, heroku) {
   yield addons.copyConfigVars(oldApp, newApp, context.flags['skip-pg'], context.flags['exclude-configs']);
 
   if (stopping) { return; }
-  yield apps.copySlug(oldApp, newApp, slug);
+  if (!context.flags['sync-only']) {
+    yield apps.copySlug(oldApp, newApp, slug);
+  }
 
   yield wait(2000); // TODO remove this after api #4022
 
@@ -126,6 +134,7 @@ Example:
     {name: 'skip-pg', description: 'skip postgres databases', hasValue: false},
     {name: 'skip-addons', description: 'skip addons', hasValue: false},
     {name: 'exclude-configs', description: 'CSV of configs to skip', hasValue: true},
+    {name: 'sync-only', description: 'sync data to existing new app', hasValue: false},
     {name: 'from', description: 'app to fork from', hasValue: true},
     {name: 'to', description: 'app to create', hasValue: true},
     {name: 'app', char: 'a', hasValue: true, hidden: true}
